@@ -32,7 +32,9 @@ export default function Navbar() {
       <div className={styles.container}>
         {/* Logo */}
         <div className={styles.logo}>
-          <Link href="/">VicenzaTech</Link>
+          <Link href="/" className="text-white font-bold text-xl">
+            VicenzaTech
+          </Link>
         </div>
 
         {/* Desktop Navigation */}

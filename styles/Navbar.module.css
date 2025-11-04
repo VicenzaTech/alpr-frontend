@@ -12,17 +12,22 @@
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 1rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   height: 70px;
   position: relative;
+  gap: 3rem;
 }
 
-/* Logo */
+/* Logo - Moved closer to left edge */
+.logo {
+  flex-shrink: 0;
+}
+
 .logo a {
   color: white;
   font-size: 1.5rem;
@@ -33,6 +38,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  position: relative;
 }
 
 .logo a:hover {
@@ -61,6 +67,7 @@
 .navLinks {
   display: flex;
   gap: 2rem;
+  flex: 1;
 }
 
 .navLink {
@@ -113,6 +120,7 @@
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  margin-left: auto;
 }
 
 .userInfo {
@@ -184,6 +192,7 @@
   padding: 0.5rem;
   border-radius: 8px;
   transition: background 0.2s;
+  margin-left: auto;
 }
 
 .menuButton:hover {
@@ -301,6 +310,7 @@
 
   .container {
     height: 64px;
+    padding: 0 1rem;
   }
 }
 
