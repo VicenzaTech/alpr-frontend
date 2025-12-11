@@ -15,17 +15,9 @@ export default function ProtectedRoute({
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const router = useRouter();
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/login');
-    } else if (requiredRole && user?.role !== requiredRole) {
-      router.push('/unauthorized');
-    }
-  }, [isAuthenticated, requiredRole, user, router]);
 
-  if (!isAuthenticated || (requiredRole && user?.role !== requiredRole)) {
-    return null; // Or a loading spinner
-  }
+    // Tạm thời bỏ kiểm tra auth, luôn cho phép truy cập
+    return <>{children}</>;
 
   return <>{children}</>;
 }

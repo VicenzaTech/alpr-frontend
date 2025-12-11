@@ -4,292 +4,205 @@ import { useState, useEffect } from 'react';
 import { 
   Camera, 
   Car, 
-  TrendingUp, 
   Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import styles from './page.module.css';
 import { useAppSelector } from '@/app/hooks/useAuth';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
-interface Gate {
-  id: string;
-  name: string;
-  type: 'entry' | 'exit';
-  status: 'online' | 'offline' | 'error';
-  currentVehicle?: {
-    plate: string;
-    confidence: number;
-    timestamp: string;
-  };
+interface Detection {
+  id: number;
+  plate_text: string;
+  formatted_text: string;
+  confidence: number;
+  detection_confidence: number;
+  bbox: { x1: number; y1: number; x2: number; y2: number };
+  camera_id: string;
+  sensor_id: string;
+  timestamp: string;
+  status: 'pending_approval' | 'approved' | 'rejected';
+  full_image_url: string;
+  cropped_image_url: string;
+  image_path: string;
+  metadata: any;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Stats {
-  vehiclesIn: number;
-  vehiclesOut: number;
-  totalWeight: number;
-  activeGates: number;
+  totalDetections: number;
+  recentDetections: number;
 }
 
-interface Notification {
-  id: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  message: string;
-  timestamp: string;
-}
+const BACKEND_URL = 'http://localhost:5555'; // NestJS backend API
 
 export default function HomePage() {
   const { user } = useAppSelector((state) => state.auth);
-  const [gates, setGates] = useState<Gate[]>([
-    {
-      id: '1',
-      name: 'Cổng 1 (Vào)',
-      type: 'entry',
-      status: 'online',
-      currentVehicle: {
-        plate: '30A-12345',
-        confidence: 95,
-        timestamp: new Date().toISOString(),
-      },
-    },
-    {
-      id: '2',
-      name: 'Cổng 2 (Ra)',
-      type: 'exit',
-      status: 'online',
-      currentVehicle: {
-        plate: '29B-67890',
-        confidence: 88,
-        timestamp: new Date().toISOString(),
-      },
-    },
-    {
-      id: '3',
-      name: 'Cổng 3 (Vào)',
-      type: 'entry',
-      status: 'online',
-    },
-  ]);
-
-  const [stats] = useState<Stats>({
-    vehiclesIn: 45,
-    vehiclesOut: 42,
-    totalWeight: 325.5,
-    activeGates: 3,
+  const [detections, setDetections] = useState<Detection[]>([]);
+  const [stats, setStats] = useState<Stats>({
+    totalDetections: 0,
+    recentDetections: 0,
   });
+  const [loading, setLoading] = useState(true);
 
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'info',
-      message: 'Xe 29B-67890 đến cổng 2',
-      timestamp: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      type: 'success',
-      message: 'Operator mở barrier cổng 1',
-      timestamp: new Date(Date.now() - 60000).toISOString(),
-    },
-    {
-      id: '3',
-      type: 'warning',
-      message: 'Độ tin cậy OCR thấp tại cổng 2 (88%)',
-      timestamp: new Date(Date.now() - 120000).toISOString(),
-    },
-  ]);
+  // Fetch detections - lấy 6 nhận diện mới nhất
+  useEffect(() => {
+    fetchDetections();
+    const interval = setInterval(fetchDetections, 5000); // Auto refresh every 5s
+    return () => clearInterval(interval);
+  }, []);
 
-  const handleOpenBarrier = (gateId: string) => {
-    const gate = gates.find(g => g.id === gateId);
-    if (gate && gate.currentVehicle) {
-      const confirmed = window.confirm(
-        `Xác nhận mở barrier ${gate.name}?\nBiển số: ${gate.currentVehicle.plate}`
-      );
+  const fetchDetections = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/alpr/detections?page=1&limit=6`);
       
-      if (confirmed) {
-        alert(`Đã gửi lệnh mở barrier ${gate.name}`);
-        
-        // Add notification
-        const newNotification: Notification = {
-          id: Date.now().toString(),
-          type: 'success',
-          message: `Operator mở barrier ${gate.name}`,
-          timestamp: new Date().toISOString(),
-        };
-        setNotifications([newNotification, ...notifications.slice(0, 9)]);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      const data = await response.json();
+      
+      // Kiểm tra data hợp lệ
+      if (data && Array.isArray(data.data)) {
+        setDetections(data.data);
+        
+        setStats({
+          totalDetections: data.total || 0,
+          recentDetections: data.data.length,
+        });
+      } else {
+        // Nếu data không hợp lệ, set empty
+        setDetections([]);
+      }
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching detections:', error);
+      setDetections([]);
+      setLoading(false);
     }
   };
 
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'online':
-        return <CheckCircle size={16} />;
-      case 'offline':
-        return <XCircle size={16} />;
-      case 'error':
-        return <AlertCircle size={16} />;
-      default:
-        return null;
-    }
-  };
-
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'online':
-        return styles.statusOnline;
-      case 'offline':
-        return styles.statusOffline;
-      case 'error':
-        return styles.statusError;
-      default:
-        return '';
-    }
-  };
+  if (loading) {
+    return (
+      <ProtectedRoute>
+        <div className={styles.container}>
+          <div className={styles.loading}>Đang tải dữ liệu...</div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
-      <div className="p-6">
-        <div className={styles.container}>
-        <div className={styles.pageHeader}>
+      <div className={styles.container}>
+        <header className={styles.header}>
           <div>
-            <h1 className={styles.pageTitle}>Dashboard</h1>
-            <p className={styles.pageSubtitle}>Giám sát hệ thống real-time</p>
+            <h1 className={styles.title}>Dashboard ALPR</h1>
+            <p className={styles.subtitle}>
+              Chào mừng, {user?.fullName || 'Admin'}
+            </p>
           </div>
-          <div className={styles.currentTime}>
-            <Clock size={20} />
-            <span>{new Date().toLocaleDateString('vi-VN')}</span>
-          </div>
-        </div>
+        </header>
 
         {/* Stats Cards */}
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
-            <div className={styles.statIcon} style={{ backgroundColor: '#dbeafe' }}>
-              <Car size={24} color="#2563eb" />
+            <div className={styles.statIcon} style={{ backgroundColor: '#3b82f6' }}>
+              <Car size={24} />
             </div>
             <div className={styles.statContent}>
-              <p className={styles.statLabel}>Xe vào hôm nay</p>
-              <p className={styles.statValue}>{stats.vehiclesIn}</p>
+              <p className={styles.statLabel}>Tổng phát hiện</p>
+              <p className={styles.statValue}>{stats.totalDetections}</p>
             </div>
           </div>
 
           <div className={styles.statCard}>
-            <div className={styles.statIcon} style={{ backgroundColor: '#dcfce7' }}>
-              <Car size={24} color="#16a34a" />
+            <div className={styles.statIcon} style={{ backgroundColor: '#10b981' }}>
+              <Clock size={24} />
             </div>
             <div className={styles.statContent}>
-              <p className={styles.statLabel}>Xe ra hôm nay</p>
-              <p className={styles.statValue}>{stats.vehiclesOut}</p>
-            </div>
-          </div>
-
-          <div className={styles.statCard}>
-            <div className={styles.statIcon} style={{ backgroundColor: '#fef3c7' }}>
-              <TrendingUp size={24} color="#ca8a04" />
-            </div>
-            <div className={styles.statContent}>
-              <p className={styles.statLabel}>Tổng khối lượng (tấn)</p>
-              <p className={styles.statValue}>{stats.totalWeight}</p>
-            </div>
-          </div>
-
-          <div className={styles.statCard}>
-            <div className={styles.statIcon} style={{ backgroundColor: '#e0e7ff' }}>
-              <CheckCircle size={24} color="#4f46e5" />
-            </div>
-            <div className={styles.statContent}>
-              <p className={styles.statLabel}>Cổng hoạt động</p>
-              <p className={styles.statValue}>{stats.activeGates}/3</p>
+              <p className={styles.statLabel}>Hiển thị gần đây</p>
+              <p className={styles.statValue}>{stats.recentDetections}</p>
             </div>
           </div>
         </div>
 
-        {/* Gates Section */}
+        {/* Detections Grid */}
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Điều khiển Barrier</h2>
-          <div className={styles.gatesGrid}>
-            {gates.map((gate) => (
-              <div key={gate.id} className={styles.gateCard}>
-                <div className={styles.gateHeader}>
-                  <h3 className={styles.gateName}>{gate.name}</h3>
-                  <div className={`${styles.gateStatus} ${getStatusClass(gate.status)}`}>
-                    {getStatusIcon(gate.status)}
-                    <span>{gate.status === 'online' ? 'Hoạt động' : 'Offline'}</span>
+          <h2 className={styles.sectionTitle}>6 Nhận diện biển số gần nhất</h2>
+          
+          {detections.length === 0 ? (
+            <div className={styles.emptyState}>
+              <AlertCircle size={48} />
+              <p>Chưa có dữ liệu phát hiện biển số</p>
+            </div>
+          ) : (
+            <div className={styles.detectionsGrid}>
+              {detections.map((detection) => (
+                <div key={detection.id} className={styles.detectionCard}>
+                  {/* Full Image */}
+                  <div className={styles.imageContainer}>
+                    {detection.full_image_url ? (
+                      <img
+                        src={`${BACKEND_URL}${detection.full_image_url}`}
+                        alt="Vehicle"
+                        className={styles.fullImage}
+                      />
+                    ) : (
+                      <div className={styles.noImage}>
+                        <Camera size={48} />
+                        <p>Không có ảnh</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Detection Info */}
+                  <div className={styles.detectionInfo}>
+                    <div className={styles.plateInfo}>
+                      <div className={styles.plateText}>
+                        {detection.formatted_text || detection.plate_text}
+                      </div>
+                    </div>
+
+                    {/* Cropped Plate Image */}
+                    {detection.cropped_image_url && (
+                      <div className={styles.croppedImageContainer}>
+                        <img
+                          src={`${BACKEND_URL}${detection.cropped_image_url}`}
+                          alt="License Plate"
+                          className={styles.croppedImage}
+                        />
+                      </div>
+                    )}
+
+                    {/* Metadata */}
+                    <div className={styles.metadata}>
+                      <div className={styles.metadataItem}>
+                        <span className={styles.metadataLabel}>Độ tin cậy:</span>
+                        <span className={styles.metadataValue}>
+                          {(detection.confidence * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className={styles.metadataItem}>
+                        <span className={styles.metadataLabel}>Camera:</span>
+                        <span className={styles.metadataValue}>{detection.camera_id}</span>
+                      </div>
+                      <div className={styles.metadataItem}>
+                        <span className={styles.metadataLabel}>Thời gian:</span>
+                        <span className={styles.metadataValue}>
+                          {new Date(detection.timestamp).toLocaleString('vi-VN')}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                <div className={styles.gateCamera}>
-                  <Camera size={48} />
-                  <p>Live Camera</p>
-                </div>
-
-                {gate.currentVehicle ? (
-                  <div className={styles.vehicleInfo}>
-                    <div className={styles.vehicleInfoRow}>
-                      <span className={styles.vehicleLabel}>Biển số:</span>
-                      <span className={styles.vehiclePlate}>{gate.currentVehicle.plate}</span>
-                    </div>
-                    <div className={styles.vehicleInfoRow}>
-                      <span className={styles.vehicleLabel}>Độ tin cậy:</span>
-                      <span className={styles.vehicleConfidence}>
-                        {gate.currentVehicle.confidence}%
-                      </span>
-                    </div>
-                    <div className={styles.vehicleInfoRow}>
-                      <span className={styles.vehicleLabel}>Thời gian:</span>
-                      <span>{formatTime(gate.currentVehicle.timestamp)}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.noVehicle}>
-                    <p>Không có xe</p>
-                  </div>
-                )}
-
-                <button
-                  className={styles.openButton}
-                  onClick={() => handleOpenBarrier(gate.id)}
-                  disabled={!gate.currentVehicle || gate.status !== 'online'}
-                >
-                  Mở Barrier
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
-
-        {/* Notifications Section */}
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Thông báo gần đây</h2>
-          <div className={styles.notificationsList}>
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={`${styles.notificationItem} ${styles[`notification${notification.type.charAt(0).toUpperCase() + notification.type.slice(1)}`]}`}
-              >
-                <div className={styles.notificationContent}>
-                  <p className={styles.notificationMessage}>{notification.message}</p>
-                  <p className={styles.notificationTime}>{formatTime(notification.timestamp)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
       </div>
     </ProtectedRoute>
-    
   );
 }
