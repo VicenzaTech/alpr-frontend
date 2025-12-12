@@ -38,8 +38,7 @@ export const alprService = {
             }
         );
 
-        console.log(`response:::`, response)
-        return response.data;
+        return response;
     },
 
     // Lấy chi tiết detection
@@ -47,7 +46,7 @@ export const alprService = {
         const response = await axiosInstance.get<Detection>(
             `${ALPR_BASE_URL}/detections/${id}`
         );
-        return response.data;
+        return response;
     },
 
     // Phê duyệt detection
@@ -55,7 +54,7 @@ export const alprService = {
         const response = await axiosInstance.patch<Detection>(
             `${ALPR_BASE_URL}/detections/${id}/approve`
         );
-        return response.data;
+        return response;
     },
 
     // Từ chối detection
@@ -63,7 +62,7 @@ export const alprService = {
         const response = await axiosInstance.patch<Detection>(
             `${ALPR_BASE_URL}/detections/${id}/reject`
         );
-        return response.data;
+        return response;
     },
 };
 

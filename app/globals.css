@@ -1,11 +1,20 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* --background: #ffffff;
+   */
+  --background: #111418;
+  --nav-color: #283039;
+  --nav-sub-color: #3b4754;
+  /* --foreground: #171717; */
+  --sub-foreground: #7f95ad;
+  --foreground: #ededed;
+  --green-color: #22c55e;
+
+  --blue-background: #137fec;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #111418;
     --foreground: #ededed;
   }
 }

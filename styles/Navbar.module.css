@@ -1,23 +1,22 @@
 /* Navbar.module.css */
 .navbar {
-  background: linear-gradient(135deg, #1a365d 0%, #2a4365 100%);
+  background: var(--background-color);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   position: sticky;
   top: 0;
   z-index: 1000;
-  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
 .container {
-  max-width: 1400px;
   margin: 0 auto;
   padding: 0 1rem;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   height: 70px;
   position: relative;
   gap: 3rem;
@@ -26,8 +25,56 @@
 /* Logo - Moved closer to left edge */
 .logo {
   flex-shrink: 0;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
+.logoWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--nav-color);
+    height: 42px;
+    width: 42px;
+    border-radius: 10px;
+}
+
+.title {
+    font-size: 1.25rem;
+}
+
+.logoSpan {
+  position: relative;
+  color: var(--green-color);
+  margin-left: 20px;
+  font-size: .85rem;
+}
+
+.logoSpan::before {
+  top: 50%;
+  transform: translateY(-50%);
+  right: calc(100% + 6px);
+  position: absolute;
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--green-color);
+}
+
+.logoSpan::after {
+  top: 50%;
+  transform: translateY(-50%);
+  right: calc(100% + 3px);
+  position: absolute;
+  content: "";
+  width: 14px;
+  height: 14px;
+  opacity: 0.6;
+  border-radius: 50%;
+  background-color: var(--green-color);
+}
 .logo a {
   color: white;
   font-size: 1.5rem;
@@ -44,17 +91,23 @@
 .logo a:hover {
   opacity: 0.9;
   transform: translateY(-1px);
+  background-color: var(--nav-sub-color);
 }
 
 /* Add a subtle shine effect to the logo text */
 .logo a::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 100%;
   height: 2px;
   bottom: -4px;
   left: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
   transform: scaleX(0);
   transition: transform 0.3s ease;
 }
@@ -66,11 +119,14 @@
 /* Desktop Navigation */
 .navLinks {
   display: flex;
-  gap: 2rem;
-  flex: 1;
+  gap: 0.5rem;
+  padding: 5px;
+  border-radius: 10px;
+  background-color: var(--nav-color);
 }
 
 .navLink {
+  display: inline-block;
   color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
   font-weight: 500;
@@ -78,7 +134,7 @@
   padding: 0.5rem 1rem;
   position: relative;
   transition: all 0.3s ease;
-  border-radius: 6px;
+  border-radius: 10px;
 }
 
 .navLink:hover {
@@ -86,28 +142,10 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-.navLink::after {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 2px;
-  bottom: 0;
-  left: 50%;
-  background: linear-gradient(90deg, #63b3ed, #4299e1);
-  transition: width 0.3s ease, left 0.3s ease;
-  transform: translateX(-50%);
-  border-radius: 2px;
-}
-
-.navLink:hover::after,
-.active::after {
-  width: 70%;
-}
-
 .active {
   color: white;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--nav-sub-color);
 }
 
 .active::after {
@@ -116,32 +154,39 @@
 }
 
 /* User Section */
-.userSection {
+.userSection,
+.userActions {
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  margin-left: auto;
 }
 
-.userInfo {
+.userActions {
+  gap: 0.5rem;
+}
+
+.userAction {
+  height: 42px;
+  width: 42px;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  justify-content: center;
+  border-radius: 10px;
+  background-color: var(--nav-color);
+  transition: background ease 0.3s;
+}
+.userAction:hover {
+  background-color: var(--nav-sub-color);
+  cursor: pointer;
 }
 
-.userInfo:hover {
-  background: rgba(255, 255, 255, 0.12);
+.userDescription > h3 {
+  font-size: 1.15rem;
 }
 
-.userName {
-  color: white;
-  font-weight: 500;
-  font-size: 0.95rem;
-  letter-spacing: 0.3px;
+.userDescription > span {
+  font-size: 0.85rem;
+  color: var(--sub-foreground);
 }
 
 .logoutButton {
